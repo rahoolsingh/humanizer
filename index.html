@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Made By Veer | Humanizer</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        h1 { font-size: 1.5rem; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea { height: 120px; resize: vertical; }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #005bb5; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 80px;
+            white-space: pre-wrap; /* Preserves formatting */
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Text Humanizer (Streaming)</h1>
+    <a href="https://veerrajpoot.com">veerrajpoot.com</a>
+    <br/>
+    <br/>
+    <br/>
+
+    <div class="form-group">
+        <label for="tokenInput">Authentication Token:</label>
+        <input type="text" id="tokenInput" placeholder="Paste your eyJ... token here">
+    </div>
+
+    <div class="form-group">
+        <label for="promptInput">Input Text:</label>
+        <textarea id="promptInput" placeholder="Enter the text you want to humanize..."></textarea>
+    </div>
+
+    <button id="submitBtn">Humanize Text</button>
+
+    <div class="form-group">
+        <label style="margin-top: 20px;">Merged Output:</label>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const promptText = document.getElementById('promptInput').value.trim();
+            const token = document.getElementById('tokenInput').value.trim();
+            const outputDiv = document.getElementById('output');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!promptText || !token) {
+                alert("Please provide both the text and the token.");
+                return;
+            }
+
+            // Reset UI
+            outputDiv.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            const payload = {
+                prompt: promptText,
+                token: token,
+                auto: 0,
+                cjtype: 0,
+                model: 1
+            };
+
+            try {
+                const response = await fetch('https://aihumanize.io/dev/outstream', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': '*/*',
+                        'Content-Type': 'application/json'
+                        // Note: Browsers block custom headers like 'user-agent' or 'cookie' in fetch.
+                        // If the API requires the specific cookies from your cURL, 
+                        // you might run into CORS (Cross-Origin Resource Sharing) blocks in a raw browser environment.
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                if (!response.body) {
+                    throw new Error('ReadableStream not supported by this browser.');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let done = false;
+                let buffer = '';
+
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+                    
+                    if (value) {
+                        // Decode the chunk and add it to our buffer
+                        buffer += decoder.decode(value, { stream: true });
+                        
+                        // Split buffer by newlines
+                        const lines = buffer.split('\n');
+                        
+                        // The last element might be an incomplete line, so we pop it back into the buffer
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            const trimmedLine = line.trim();
+                            // Check if the line is a data payload
+                            if (trimmedLine.startsWith('data: ')) {
+                                const jsonStr = trimmedLine.substring(6); // Remove "data: "
+                                
+                                try {
+                                    const dataObj = JSON.parse(jsonStr);
+                                    
+                                    // Only append to output if it's a "success" message (the actual text parts)
+                                    if (dataObj.type === 'success' && dataObj.msg) {
+                                        outputDiv.textContent += dataObj.msg;
+                                    } else if (dataObj.type === 'DONE') {
+                                        done = true; // Stop reading
+                                    }
+                                } catch (e) {
+                                    console.warn('Error parsing JSON from stream:', jsonStr);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Fetch Error: ", error);
+                outputDiv.textContent += `\n\n[Request Failed: ${error.message} - Note: If this fails, it may be due to CORS restrictions blocking browser requests to this API.]`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Humanize Text';
+            }
+        });
+    </script>
+</body>
+</html>
