@@ -324,6 +324,7 @@ export default function HumanizerPage() {
                             </div>
                         </div>
 
+                        {/* GPTZero fields commented out */}
                         {/* <div className="flex flex-col gap-2">
                             <label htmlFor="gptZeroAccessTokenInput" className="text-sm font-medium">GPTZero accessToken4 (required for scan)</label>
                             <input
@@ -369,7 +370,7 @@ export default function HumanizerPage() {
                                 placeholder="Optional: paste full Cookie header to forward as-is"
                                 className="w-full min-h-[90px] px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y dark:focus:ring-indigo-400/20 dark:focus:border-indigo-400"
                             />
-                        </div> */
+                        </div> */}
 
                         <div className="flex flex-col gap-2">
                             <div className="flex justify-between items-end">
@@ -422,7 +423,7 @@ export default function HumanizerPage() {
                             <button onClick={() => handleRedirectToGPTZero(outputText)} disabled={!outputText || isHumanizing || isScanningOutput} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>
                                 Open in GPTZero
-                            </button> */
+                            </button> */}
                             <div className="w-px h-4 bg-slate-300 dark:bg-slate-600"></div>
                             <button onClick={copyText} disabled={!outputText || isHumanizing} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 Copy Text
