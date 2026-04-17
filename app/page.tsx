@@ -31,8 +31,20 @@ type ToastMessage = { id: number; message: string; type: 'default' | 'success' |
 export default function HumanizerPage() {
     const LOCAL_STORAGE_KEY = 'aihumanize_saved_token';
     
-    const [isDark, setIsDark] = useState(false);
-    const [token, setToken] = useState('');
+    const [isDark, setIsDark] = useState(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        return localStorage.getItem('theme') === 'dark';
+    });
+    const [token, setToken] = useState(() => {
+        if (typeof window === 'undefined') {
+            return '';
+        }
+
+        return localStorage.getItem(LOCAL_STORAGE_KEY) ?? '';
+    });
     const [promptText, setPromptText] = useState('');
     const [outputText, setOutputText] = useState('');
     
@@ -50,15 +62,9 @@ export default function HumanizerPage() {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const outputRef = useRef<HTMLDivElement>(null);
 
-    // --- Initialization & Theme ---
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') === 'dark';
-        const savedToken = localStorage.getItem(LOCAL_STORAGE_KEY);
-        
-        setIsDark(savedTheme);
-        if (savedTheme) document.documentElement.classList.add('dark');
-        if (savedToken) setToken(savedToken);
-    }, []);
+        document.documentElement.classList.toggle('dark', isDark);
+    }, [isDark]);
 
     const toggleTheme = () => {
         const newTheme = !isDark;
@@ -204,9 +210,10 @@ export default function HumanizerPage() {
                     }
                 }
             }
-        } catch (error: any) {
-            showToast(`Request Failed: ${error.message}`, 'error');
-            setOutputText(prev => prev + `\n\n[Process Interrupted: ${error.message}]`);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            showToast(`Request Failed: ${message}`, 'error');
+            setOutputText(prev => prev + `\n\n[Process Interrupted: ${message}]`);
         } finally {
             setIsHumanizing(false);
         }
