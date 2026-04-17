@@ -17,7 +17,36 @@ type GPTZeroResponse = {
     }>;
 };
 
-export async function scanWithGPTZero(text: string): Promise<GPTZeroScanResult> {
+type GPTZeroAuthConfig = {
+    accessToken?: string;
+    csrfToken?: string;
+    rawCookie?: string;
+};
+
+function buildGptZeroCookie(auth?: GPTZeroAuthConfig): string | undefined {
+    if (auth?.rawCookie?.trim()) {
+        return auth.rawCookie.trim();
+    }
+
+    const cookieParts: string[] = [];
+    if (auth?.accessToken?.trim()) {
+        cookieParts.push(`accessToken4=${auth.accessToken.trim()}`);
+    }
+    if (auth?.csrfToken?.trim()) {
+        cookieParts.push(`__Host-gptzero-csrf-token=${auth.csrfToken.trim()}`);
+    }
+
+    if (cookieParts.length === 0) {
+        return undefined;
+    }
+
+    return cookieParts.join("; ");
+}
+
+export async function scanWithGPTZero(
+    text: string,
+    auth?: GPTZeroAuthConfig,
+): Promise<GPTZeroScanResult> {
     if (!text || !text.trim()) {
         return { error: "No text provided" };
     }
@@ -25,11 +54,17 @@ export async function scanWithGPTZero(text: string): Promise<GPTZeroScanResult> 
     try {
         const scanId = crypto.randomUUID();
 
+        const cookie = buildGptZeroCookie(auth);
+
         const response = await fetch("https://api.gptzero.me/v3/ai/text", {
             method: "POST",
             headers: {
                 Accept: "*/*",
                 "Content-Type": "application/json",
+                Origin: "https://app.gptzero.me",
+                Referer: "https://app.gptzero.me/",
+                "x-gptzero-platform": "webapp",
+                ...(cookie ? { Cookie: cookie } : {}),
             },
             body: JSON.stringify({
                 scanId,
@@ -40,6 +75,11 @@ export async function scanWithGPTZero(text: string): Promise<GPTZeroScanResult> 
         });
 
         if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error(
+                    "GPTZero returned 401. Add a valid accessToken4 and __Host-gptzero-csrf-token in the UI before scanning.",
+                );
+            }
             throw new Error(`Server returned ${response.status}`);
         }
 

@@ -30,6 +30,9 @@ type ToastMessage = { id: number; message: string; type: 'default' | 'success' |
 
 export default function HumanizerPage() {
     const LOCAL_STORAGE_KEY = 'aihumanize_saved_token';
+    // const GPTZERO_ACCESS_TOKEN_KEY = 'gptzero_access_token';
+    // const GPTZERO_CSRF_TOKEN_KEY = 'gptzero_csrf_token';
+    // const GPTZERO_RAW_COOKIE_KEY = 'gptzero_raw_cookie';
     
     const [isDark, setIsDark] = useState(() => {
         if (typeof window === 'undefined') {
@@ -47,16 +50,37 @@ export default function HumanizerPage() {
     });
     const [promptText, setPromptText] = useState('');
     const [outputText, setOutputText] = useState('');
+    // const [gptZeroAccessToken, setGptZeroAccessToken] = useState(() => {
+    //     if (typeof window === 'undefined') {
+    //         return '';
+    //     }
+
+    //     return localStorage.getItem(GPTZERO_ACCESS_TOKEN_KEY) ?? '';
+    // });
+    // const [gptZeroCsrfToken, setGptZeroCsrfToken] = useState(() => {
+    //     if (typeof window === 'undefined') {
+    //         return '';
+    //     }
+
+    //     return localStorage.getItem(GPTZERO_CSRF_TOKEN_KEY) ?? '';
+    // });
+    // const [gptZeroRawCookie, setGptZeroRawCookie] = useState(() => {
+    //     if (typeof window === 'undefined') {
+    //         return '';
+    //     }
+
+    //     return localStorage.getItem(GPTZERO_RAW_COOKIE_KEY) ?? '';
+    // });
     
     // Loading States
     const [isFetchingToken, setIsFetchingToken] = useState(false);
     const [isHumanizing, setIsHumanizing] = useState(false);
-    const [isScanningInput, setIsScanningInput] = useState(false);
-    const [isScanningOutput, setIsScanningOutput] = useState(false);
+    // const [isScanningInput, setIsScanningInput] = useState(false);
+    // const [isScanningOutput, setIsScanningOutput] = useState(false);
     
     // Scan Results
-    const [inputScanBadge, setInputScanBadge] = useState<{ text: string; isAi: boolean } | null>(null);
-    const [outputScanBadge, setOutputScanBadge] = useState<{ text: string; isAi: boolean } | null>(null);
+    // const [inputScanBadge, setInputScanBadge] = useState<{ text: string; isAi: boolean } | null>(null);
+    // const [outputScanBadge, setOutputScanBadge] = useState<{ text: string; isAi: boolean } | null>(null);
     
     // Toasts
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -70,11 +94,6 @@ export default function HumanizerPage() {
         const newTheme = !isDark;
         setIsDark(newTheme);
         localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-        if (newTheme) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
     };
 
     // --- Toast Logic ---
@@ -112,45 +131,69 @@ export default function HumanizerPage() {
         }
     };
 
-    const handleScan = async (text: string, isInput: boolean) => {
-        if (!text.trim()) {
-            showToast("No text to scan!", "error");
-            return;
-        }
+    // const handleScan = async (text: string, isInput: boolean) => {
+    //     if (!text.trim()) {
+    //         showToast("No text to scan!", "error");
+    //         return;
+    //     }
 
-        const setLoader = isInput ? setIsScanningInput : setIsScanningOutput;
-        const setBadge = isInput ? setInputScanBadge : setOutputScanBadge;
+    //     const setLoader = isInput ? setIsScanningInput : setIsScanningOutput;
+    //     const setBadge = isInput ? setInputScanBadge : setOutputScanBadge;
 
-        setLoader(true);
-        setBadge(null); // Clear previous
+    //     setLoader(true);
+    //     setBadge(null); // Clear previous
 
-        try {
-            const response = await fetch('/api/gptzero', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ text }),
-            });
+    //     try {
+    //         const response = await fetch('/api/gptzero', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({
+    //                 text,
+    //                 gptZeroAccessToken,
+    //                 gptZeroCsrfToken,
+    //                 gptZeroRawCookie,
+    //             }),
+    //         });
 
-            const result = (await response.json()) as ScanResponse;
+    //         const result = (await response.json()) as ScanResponse;
 
-            if (!response.ok || 'error' in result) {
-                throw new Error('error' in result ? result.error : `Server returned ${response.status}`);
-            }
+    //         if (!response.ok || 'error' in result) {
+    //             throw new Error('error' in result ? result.error : `Server returned ${response.status}`);
+    //         }
 
-            if ('success' in result && result.success) {
-                setBadge({
-                    text: result.isAi ? `🤖 ${result.aiPercent}% AI` : `🧑 ${result.humanPercent}% Human`,
-                    isAi: result.isAi
-                });
-            }
-        } catch (error: unknown) {
-            showToast(`Scan Failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-        } finally {
-            setLoader(false);
-        }
-    };
+    //         if ('success' in result && result.success) {
+    //             setBadge({
+    //                 text: result.isAi ? `🤖 ${result.aiPercent}% AI` : `🧑 ${result.humanPercent}% Human`,
+    //                 isAi: result.isAi
+    //             });
+    //         }
+    //     } catch (error: unknown) {
+    //         showToast(`Scan Failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+    //     } finally {
+    //         setLoader(false);
+    //     }
+    // };
+
+    // const handleRedirectToGPTZero = (text: string) => {
+    //     if (!text.trim()) {
+    //         showToast('No text to send to GPTZero!', 'error');
+    //         return;
+    //     }
+
+    //     const scanId = crypto.randomUUID();
+    //     const payload = {
+    //         scanId,
+    //         multilingual: true,
+    //         document: text,
+    //         interpretability_required: false,
+    //     };
+
+    //     const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+    //     const targetUrl = `https://app.gptzero.me/documents/${scanId}?payload=${encodedPayload}`;
+    //     window.location.assign(targetUrl);
+    // };
 
     const handleHumanize = async () => {
         if (!token) return showToast("Please provide an authentication token.", "error");
@@ -281,14 +324,61 @@ export default function HumanizerPage() {
                             </div>
                         </div>
 
+                        {/* <div className="flex flex-col gap-2">
+                            <label htmlFor="gptZeroAccessTokenInput" className="text-sm font-medium">GPTZero accessToken4 (required for scan)</label>
+                            <input
+                                type="text"
+                                id="gptZeroAccessTokenInput"
+                                value={gptZeroAccessToken}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setGptZeroAccessToken(value);
+                                    localStorage.setItem(GPTZERO_ACCESS_TOKEN_KEY, value);
+                                }}
+                                placeholder="Paste accessToken4 cookie value"
+                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y dark:focus:ring-indigo-400/20 dark:focus:border-indigo-400"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="gptZeroCsrfTokenInput" className="text-sm font-medium">GPTZero __Host-gptzero-csrf-token</label>
+                            <input
+                                type="text"
+                                id="gptZeroCsrfTokenInput"
+                                value={gptZeroCsrfToken}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setGptZeroCsrfToken(value);
+                                    localStorage.setItem(GPTZERO_CSRF_TOKEN_KEY, value);
+                                }}
+                                placeholder="Paste csrf token cookie value"
+                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y dark:focus:ring-indigo-400/20 dark:focus:border-indigo-400"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="gptZeroRawCookieInput" className="text-sm font-medium">GPTZero raw cookie string (optional)</label>
+                            <textarea
+                                id="gptZeroRawCookieInput"
+                                value={gptZeroRawCookie}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setGptZeroRawCookie(value);
+                                    localStorage.setItem(GPTZERO_RAW_COOKIE_KEY, value);
+                                }}
+                                placeholder="Optional: paste full Cookie header to forward as-is"
+                                className="w-full min-h-[90px] px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-y dark:focus:ring-indigo-400/20 dark:focus:border-indigo-400"
+                            />
+                        </div> */
+
                         <div className="flex flex-col gap-2">
                             <div className="flex justify-between items-end">
                                 <label htmlFor="promptInput" className="text-sm font-medium">Original Text</label>
-                                {inputScanBadge && (
+                                {/* {inputScanBadge && (
                                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-md ${inputScanBadge.isAi ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'}`}>
                                         {inputScanBadge.text}
                                     </span>
-                                )}
+                                )} */}
                             </div>
                             <textarea 
                                 id="promptInput" 
@@ -299,10 +389,14 @@ export default function HumanizerPage() {
                         </div>
 
                         <div className="flex gap-3 pt-1">
-                            <button onClick={() => handleScan(promptText, true)} disabled={isScanningInput || !promptText} className="flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-400 rounded-lg font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed">
+                            {/* <button onClick={() => handleScan(promptText, true)} disabled={isScanningInput || !promptText} className="flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-400 rounded-lg font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed">
                                 {isScanningInput ? <LoadingFace /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>}
                                 {isScanningInput ? 'Scanning...' : 'Scan AI'}
                             </button>
+                            <button onClick={() => handleRedirectToGPTZero(promptText)} disabled={!promptText || isHumanizing || isScanningInput} className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>
+                                Open in GPTZero
+                            </button> */}
                             <button onClick={handleHumanize} disabled={isHumanizing || !promptText} className="flex-grow flex items-center justify-center gap-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                                 {isHumanizing ? <LoadingFace /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
                                 {isHumanizing ? 'Processing...' : 'Humanize Text'}
@@ -316,7 +410,7 @@ export default function HumanizerPage() {
                     <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
                         <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Result</span>
                         <div className="flex items-center gap-4">
-                            {outputScanBadge && (
+                            {/* {outputScanBadge && (
                                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-md ${outputScanBadge.isAi ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'}`}>
                                     {outputScanBadge.text}
                                 </span>
@@ -325,6 +419,10 @@ export default function HumanizerPage() {
                                 {isScanningOutput ? <LoadingFace /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>}
                                 Scan AI
                             </button>
+                            <button onClick={() => handleRedirectToGPTZero(outputText)} disabled={!outputText || isHumanizing || isScanningOutput} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>
+                                Open in GPTZero
+                            </button> */
                             <div className="w-px h-4 bg-slate-300 dark:bg-slate-600"></div>
                             <button onClick={copyText} disabled={!outputText || isHumanizing} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 Copy Text
