@@ -201,7 +201,6 @@ export default function HumanizerPage() {
 
         localStorage.setItem(LOCAL_STORAGE_KEY, token);
         setOutputText('');
-        setOutputScanBadge(null);
         setIsHumanizing(true);
 
         const payload = { prompt: promptText, token, auto: 0, cjtype: 0, model: 1 };
